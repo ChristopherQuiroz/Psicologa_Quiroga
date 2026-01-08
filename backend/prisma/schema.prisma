@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id_usuario Int        @id @default(autoincrement())
+  email      String     @unique
+  password   String
+  tipo       String     @default("paciente")
+  paciente   Paciente?
+  psicologa  Psicologa?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Paciente {
+  id_paciente Int       @id @default(autoincrement())
+  nombre      String
+  telefono    String
+  id_usuario  Int       @unique
+  usuario     Usuario   @relation(fields: [id_usuario], references: [id_usuario])
+  reservas    Reserva[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Psicologa {
+  id_psicologa Int       @id @default(autoincrement())
+  nombre       String
+  id_usuario   Int       @unique
+  usuario      Usuario   @relation(fields: [id_usuario], references: [id_usuario])
+  reservas     Reserva[]
+  bloqueos     Bloqueo[] // ← ESTA LÍNEA DEBE ESTAR PRESENTE
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Consulta {
+  id_consulta Int       @id @default(autoincrement())
+  motivo      String
+  duracion    Int
+  reservas    Reserva[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  precio      Float?    @default(0.0)
+}
+
+model Reserva {
+  id_reserva     Int       @id @default(autoincrement())
+  id_paciente    Int
+  id_psicologa   Int
+  id_consulta    Int
+  fecha          DateTime
+  hora           String
+  estado         String    @default("pendiente")
+  motivo         String?
+  notas          String?
+  cancelToken    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  paciente       Paciente   @relation(fields: [id_paciente], references: [id_paciente])
+  psicologa      Psicologa  @relation(fields: [id_psicologa], references: [id_psicologa])
+  consulta       Consulta   @relation(fields: [id_consulta], references: [id_consulta])
+  @@unique([id_psicologa, fecha, hora])
+}
+
+model Bloqueo {
+  id_bloque    Int       @id @default(autoincrement())
+  titulo       String
+  inicio       DateTime
+  fin          DateTime
+  recurrente   Boolean   @default(false)
+  id_psicologa Int
+  psicologa    Psicologa @relation(fields: [id_psicologa], references: [id_psicologa])
+  createdAt    DateTime  @default(now())
+}
